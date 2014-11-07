@@ -14,14 +14,14 @@
 * limitations under the License.
 */
 
-package com.opersys.processexplorer;
+package com.opersys.fileexplorer;
 
 import android.os.Binder;
-import com.opersys.processexplorer.node.NodeThreadListener;
+import com.opersys.fileexplorer.node.NodeThreadListener;
 
-public class ProcessExplorerServiceBinder extends Binder {
+public class FileExplorerServiceBinder extends Binder {
 
-    private ProcessExplorerService target;
+    private FileExplorerService target;
 
     public void startServiceThreads() {
         target.startServices();
@@ -43,7 +43,11 @@ public class ProcessExplorerServiceBinder extends Binder {
         target.addNodeThreadListener(serviceListener);
     }
 
-    public ProcessExplorerServiceBinder(ProcessExplorerService target) {
+    public FileExplorerServiceBinder(FileExplorerService target) {
         this.target = target;
+    }
+
+    public String getPassword() {
+        return target.getPassword();
     }
 }

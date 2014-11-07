@@ -14,31 +14,31 @@
 * limitations under the License.
 */
 
-package com.opersys.processexplorer;
+package com.opersys.fileexplorer;
 
 import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.os.IBinder;
-import com.opersys.processexplorer.node.NodeThreadListener;
+import com.opersys.fileexplorer.node.NodeThreadListener;
 
-public class ProcessExplorerServiceConnection implements ServiceConnection {
+public class FileExplorerServiceConnection implements ServiceConnection {
 
-    private static final String TAG = "ProcessExplorer-ProcessExplorerServiceConnection";
+    private static final String TAG = "ProcessExplorer-FileExplorerServiceConnection";
 
     private final NodeThreadListener serviceListener;
 
-    public ProcessExplorerServiceConnection(NodeThreadListener serviceListener) {
+    public FileExplorerServiceConnection(NodeThreadListener serviceListener) {
         this.serviceListener = serviceListener;
     }
 
-    public ProcessExplorerServiceConnection() {
+    public FileExplorerServiceConnection() {
         this.serviceListener = null;
     }
 
     @Override
     public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
         if (serviceListener != null)
-            serviceListener.onProcessServiceConnected((ProcessExplorerServiceBinder) iBinder);
+            serviceListener.onProcessServiceConnected((FileExplorerServiceBinder) iBinder);
     }
 
     @Override

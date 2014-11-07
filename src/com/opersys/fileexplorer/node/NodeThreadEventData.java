@@ -14,7 +14,7 @@
 * limitations under the License.
 */
 
-package com.opersys.processexplorer.node;
+package com.opersys.fileexplorer.node;
 
 /**
  * Author: François-Denis Gonthier (francois-denis.gonthier@opersys.com)

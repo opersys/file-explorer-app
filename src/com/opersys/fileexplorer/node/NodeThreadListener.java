@@ -14,22 +14,18 @@
 * limitations under the License.
 */
 
-package com.opersys.processexplorer.node;
+package com.opersys.fileexplorer.node;
+
+import com.opersys.fileexplorer.FileExplorerServiceBinder;
 
 /**
  * Author: François-Denis Gonthier (francois-denis.gonthier@opersys.com)
  */
-public enum NodeThreadEvent {
+public interface NodeThreadListener {
 
-    NODE_QUIT,
+    void onProcessServiceConnected(FileExplorerServiceBinder service);
 
-    NODE_ERROR,
+    void onProcessServiceDisconnected();
 
-    NODE_STARTING,
-
-    NODE_STARTED,
-
-    NODE_STOPPING,
-
-    NODE_STOPPED
+    void FileExplorerServiceEvent(NodeThreadEvent ev, NodeThreadEventData evData);
 }

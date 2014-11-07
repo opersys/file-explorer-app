@@ -14,7 +14,7 @@
 * limitations under the License.
 */
 
-package com.opersys.processexplorer.misc;
+package com.opersys.fileexplorer.misc;
 
 import android.content.Context;
 import android.preference.EditTextPreference;

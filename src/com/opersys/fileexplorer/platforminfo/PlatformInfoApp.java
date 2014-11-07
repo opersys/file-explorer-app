@@ -14,7 +14,7 @@
 * limitations under the License.
 */
 
-package com.opersys.processexplorer.platforminfo;
+package com.opersys.fileexplorer.platforminfo;
 
 import android.content.pm.PackageManager;
 import org.restlet.Application;

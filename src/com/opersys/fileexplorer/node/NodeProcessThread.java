@@ -14,11 +14,13 @@
 * limitations under the License.
 */
 
-package com.opersys.processexplorer.node;
+package com.opersys.fileexplorer.node;
 
 import android.os.Handler;
+import android.text.TextUtils;
 import android.util.Log;
-import com.opersys.processexplorer.ProcessExplorerService;
+import com.opersys.fileexplorer.FileExplorerService;
+import com.opersys.fileexplorer.misc.PasswordGenerator;
 
 import java.io.*;
 import java.util.Timer;
@@ -32,27 +34,54 @@ import java.util.TimerTask;
 public class NodeProcessThread extends Thread {
 
     private static final String TAG = "NodeProcessThread";
+
     private ProcessBuilder nodeProcessBuilder;
 
     private String dir;
     private String exec;
     private String js;
+    private String suExec;
+    private boolean asRoot;
 
     private Handler msgHandler;
-    private ProcessExplorerService service;
+    private FileExplorerService service;
     private Process nodeProcess;
 
     private boolean isStopping;
 
+    /**
+     * This is the password as it has been sent to the interface. Null if
+     * it hasn't been sent successfully or if it has not been sent yet
+     */
+    private String password;
+
+    private synchronized void writeCmd(String cmdName, String ... args) throws IOException {
+        String argsStr;
+        PrintWriter pw;
+
+        pw = new PrintWriter(new OutputStreamWriter(nodeProcess.getOutputStream()));
+
+        pw.write(cmdName);
+
+        if (args != null) {
+            pw.write(" ");
+            argsStr = TextUtils.join(" ", args);
+            pw.write(argsStr);
+        }
+
+        pw.write("\n");
+        pw.flush();
+    }
+
+    public String getPassword() {
+        return this.password;
+    }
+
     public void stopProcess() {
-        DataOutputStream os;
         Timer tm;
 
-        os = new DataOutputStream(nodeProcess.getOutputStream());
-
         try {
-            os.writeChars("quit\n");
-            os.flush();
+            writeCmd("quit");
 
             nodeProcess.getOutputStream().close();
             isStopping = true;
@@ -91,6 +120,7 @@ public class NodeProcessThread extends Thread {
         final NodeThreadEventData emptyEventData;
         BufferedReader bin, berr;
         String s;
+        int exitValue = -1;
 
         emptyEventData = new NodeThreadEventData();
 
@@ -102,9 +132,14 @@ public class NodeProcessThread extends Thread {
                 }
             });
 
-            nodeProcessBuilder
-                    .directory(new File(dir))
-                    .command(exec, js);
+            if (asRoot && suExec != null)
+                nodeProcessBuilder
+                        .directory(new File(dir))
+                        .command(suExec, "-c", "cd " + dir + " && " + exec + " " + js);
+            else
+                nodeProcessBuilder
+                        .directory(new File(dir))
+                        .command(exec, js);
 
             if (!isStopping) {
                 nodeProcess = nodeProcessBuilder.start();
@@ -117,14 +152,31 @@ public class NodeProcessThread extends Thread {
                 });
             }
 
+            try {
+                String pwd;
+
+                pwd = PasswordGenerator.NewPassword(5);
+                writeCmd("pass", pwd);
+                this.password = pwd;
+
+                Log.d(TAG, "The password was sent to the interface");
+
+            } catch (IOException ex) {
+                Log.w(TAG, "Could not send 'pass' command. You won't be able to log into the interface.");
+            }
+
             // Loops through interruption if the interruption was not caused by the
             // process being asked to stop.
-            while (!isStopping) {
+            while (!isStopping && exitValue == -1) {
                 try {
                     nodeProcess.waitFor();
+                    exitValue = nodeProcess.exitValue();
 
                 } catch (InterruptedException e) {
                     Log.i(TAG, "Interrupting wait on Node process");
+                } catch (IllegalThreadStateException e) {
+                    // This means the process was interrupted but that it
+                    // is still running since we can't get its exit value.
                 }
             }
 
@@ -183,13 +235,21 @@ public class NodeProcessThread extends Thread {
     public NodeProcessThread(String dir,
                              String execfile,
                              String jsfile,
+                             boolean asRoot,
                              Handler msgHandler,
-                             ProcessExplorerService service) {
+                             FileExplorerService service) {
+        String[] suFiles = { "/system/xbin/su", "/system/bin/su" };
+
+        for (String sf : suFiles)
+            if (new File(sf).exists())
+                this.suExec = sf;
+
         this.dir = dir;
         this.msgHandler = msgHandler;
         this.service = service;
-        this.exec = dir + "/"+ execfile;
         this.js = dir + "/" + jsfile;
+        this.exec = dir + "/"+ execfile;
+        this.asRoot = asRoot;
 
         this.nodeProcessBuilder = new ProcessBuilder();
     }

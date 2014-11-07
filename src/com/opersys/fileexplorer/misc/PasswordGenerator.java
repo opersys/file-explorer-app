@@ -14,20 +14,26 @@
 * limitations under the License.
 */
 
-package com.opersys.processexplorer.node;
+package com.opersys.fileexplorer.misc;
 
-import com.opersys.processexplorer.ProcessExplorerServiceBinder;
-import com.opersys.processexplorer.node.NodeThreadEvent;
-import com.opersys.processexplorer.node.NodeThreadEventData;
+import java.util.Random;
 
-/**
- * Author: François-Denis Gonthier (francois-denis.gonthier@opersys.com)
- */
-public interface NodeThreadListener {
+public class PasswordGenerator {
 
-    void onProcessServiceConnected(ProcessExplorerServiceBinder service);
+    public static String NewPassword(int length) {
+        String pwdChar = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuffer pwd;
+        Random rnd;
+        int n;
 
-    void onProcessServiceDisconnected();
+        pwd = new StringBuffer(length);
+        rnd = new Random();
 
-    void ProcessExplorerServiceEvent(NodeThreadEvent ev, NodeThreadEventData evData);
+        for (int i = 0; i < length; i++) {
+            n = rnd.nextInt(pwdChar.length());
+            pwd.append(pwdChar.charAt(n));
+        }
+
+        return pwd.toString();
+    }
 }

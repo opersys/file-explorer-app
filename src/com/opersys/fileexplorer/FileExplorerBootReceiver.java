@@ -14,7 +14,7 @@
 * limitations under the License.
 */
 
-package com.opersys.processexplorer;
+package com.opersys.fileexplorer;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -28,20 +28,20 @@ import android.util.Log;
  * Date: 09/04/14
  * Time: 10:36 PM
  */
-public class ProcessExplorerBootReceiver extends BroadcastReceiver {
+public class FileExplorerBootReceiver extends BroadcastReceiver {
 
-    private static String TAG = "ProcessExplorerBootReceiver";
+    private static String TAG = "FileExplorerBootReceiver";
 
     @Override
     public void onReceive(Context context, Intent intent) {
         Intent servIntent;
-        ProcessExplorerServiceConnection servConn;
+        FileExplorerServiceConnection servConn;
         SharedPreferences sharedPrefs;
 
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
 
         if (sharedPrefs.getBoolean("autoStart", false)) {
-            servIntent = new Intent(context, ProcessExplorerService.class);
+            servIntent = new Intent(context, FileExplorerService.class);
 
             // Make sure the service understands that we are booting and won't
             // be binding to it but that we want the Node service to start.

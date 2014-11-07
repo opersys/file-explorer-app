@@ -3,7 +3,7 @@
                   android:layout_width="match_parent"
                   android:layout_height="match_parent">
 
-    <com.opersys.processexplorer.misc.IPPortEditTextPreference
+    <com.opersys.fileexplorer.misc.IPPortEditTextPreference
             android:key="nodePort"
             android:title="Port"
             android:defaultValue="3000"
@@ -14,6 +14,11 @@
         android:key="autoStart"
         android:title="Start on power-on"
         android:summary="Make the service start on the device bootup" />
+
+    <CheckBoxPreference
+        android:key="asRoot"
+        android:title="Run as root"
+        android:summary="Run the backend service as root if possible" />
 
     <Preference
         android:key="startNow"
@@ -28,6 +33,12 @@
         android:key="browseNow"
         android:enabled="false"
         android:summary="Not started"
-        android:title="Browse the Process Explorer" />
+        android:title="Browse the File Explorer" />
+
+    <Preference
+        android:key="password"
+        android:enabled="false"
+        android:summary="Start the File Explorer to obtain a password"
+        android:title="Login password" />
 
 </PreferenceScreen>

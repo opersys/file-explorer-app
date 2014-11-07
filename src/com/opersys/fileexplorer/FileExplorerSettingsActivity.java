@@ -14,9 +14,11 @@
 * limitations under the License.
 */
 
-package com.opersys.processexplorer;
+package com.opersys.fileexplorer;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -25,24 +27,26 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import com.opersys.processexplorer.node.NodeThreadEvent;
-import com.opersys.processexplorer.node.NodeThreadEventData;
-import com.opersys.processexplorer.node.NodeThreadListener;
-import com.opersys.processexplorer.tasks.AssetExtractTask;
-import com.opersys.processexplorer.tasks.AssetExtractTaskParams;
-import com.opersys.processexplorer.tasks.LocalIPAddressTask;
+import android.view.Gravity;
+import android.widget.Toast;
+import com.opersys.fileexplorer.node.NodeThreadEvent;
+import com.opersys.fileexplorer.node.NodeThreadEventData;
+import com.opersys.fileexplorer.node.NodeThreadListener;
+import com.opersys.fileexplorer.tasks.AssetExtractTask;
+import com.opersys.fileexplorer.tasks.AssetExtractTaskParams;
+import com.opersys.fileexplorer.tasks.LocalIPAddressTask;
 
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class ProcessExplorerSettingsActivity extends PreferenceActivity
+public class FileExplorerSettingsActivity extends PreferenceActivity
         implements NodeThreadListener {
 
     public static final String TAG = "ProcessExplorer";
 
-    protected ProcessExplorerServiceBinder serviceBinder;
-    protected ProcessExplorerServiceConnection servConn;
+    protected FileExplorerServiceBinder serviceBinder;
+    protected FileExplorerServiceConnection servConn;
 
     protected void prepareLayout() {
         final SharedPreferences sharedPrefs;
@@ -101,8 +105,8 @@ public class ProcessExplorerSettingsActivity extends PreferenceActivity
         AssetExtractTask extractTask;
 
         extractTaskParams = new AssetExtractTaskParams();
-        extractTaskParams.assetPath = "process-explorer.zip";
-        extractTaskParams.assetMd5sumPath = "process-explorer.zip.md5sum";
+        extractTaskParams.assetPath = "file-explorer.zip";
+        extractTaskParams.assetMd5sumPath = "file-explorer.zip.md5sum";
         extractTaskParams.extractPath = getFilesDir();
         extractTaskParams.assetManager = getAssets();
 
@@ -137,8 +141,8 @@ public class ProcessExplorerSettingsActivity extends PreferenceActivity
     protected void startService() throws Exception {
         Intent servIntent;
 
-        servIntent = new Intent(this, ProcessExplorerService.class);
-        servConn = new ProcessExplorerServiceConnection(this);
+        servIntent = new Intent(this, FileExplorerService.class);
+        servConn = new FileExplorerServiceConnection(this);
 
         /*
          * FIXME: I'm absolutely not sure we can call bindService immediately after startService but
@@ -180,7 +184,7 @@ public class ProcessExplorerSettingsActivity extends PreferenceActivity
     }
 
     @Override
-    public void onProcessServiceConnected(ProcessExplorerServiceBinder service) {
+    public void onProcessServiceConnected(FileExplorerServiceBinder service) {
         Log.d(TAG, "Connected to Node service");
 
         serviceBinder = service;
@@ -241,10 +245,16 @@ public class ProcessExplorerSettingsActivity extends PreferenceActivity
 
         findPreference("startNow").setEnabled(false);
         findPreference("stopNow").setEnabled(true);
+        findPreference("password").setTitle("Password: " + serviceBinder.getPassword());
     }
 
     @Override
-    public void ProcessExplorerServiceEvent(NodeThreadEvent ev, NodeThreadEventData evData) {
+    public void FileExplorerServiceEvent(NodeThreadEvent ev, NodeThreadEventData evData) {
+        SharedPreferences sharedPrefs;
+        String msg;
+
+        sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+
         switch (ev) {
             case NODE_STARTED:
                 Log.d(TAG, "Received NODE_STARTED");
@@ -252,6 +262,13 @@ public class ProcessExplorerSettingsActivity extends PreferenceActivity
                 break;
 
             case NODE_ERROR:
+                if (sharedPrefs.getBoolean("asRoot", false))
+                    msg = "Could not start the File Explorer service as root. Check that root access is allowed.";
+                else
+                    msg = "Could not start the File Explorer service. Check the logcat for more informations.";
+
+                Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+
                 Log.d(TAG, "Received NODE_ERROR");
                 if (evData.getException() != null)
                     Log.e(TAG, "Exception received", evData.getException());
