@@ -16,9 +16,7 @@
 
 package com.opersys.fileexplorer;
 
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -27,7 +25,6 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.Gravity;
 import android.widget.Toast;
 import com.opersys.fileexplorer.node.NodeThreadEvent;
 import com.opersys.fileexplorer.node.NodeThreadEventData;
@@ -94,6 +91,15 @@ public class FileExplorerSettingsActivity extends PreferenceActivity
                 Intent browserIntent = new Intent(Intent.ACTION_VIEW, uri);
                 startActivity(browserIntent);
 
+                return true;
+            }
+        });
+
+        findPreference("quitNow").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                serviceBinder.stopServiceThreads();
+                Runtime.getRuntime().exit(0);
                 return true;
             }
         });

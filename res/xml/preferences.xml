@@ -36,6 +36,11 @@
         android:title="Browse the File Explorer" />
 
     <Preference
+            android:key="quitNow"
+            android:enabled="true"
+            android:title="Quit the application" />
+
+    <Preference
         android:key="password"
         android:enabled="false"
         android:summary="Start the File Explorer to obtain a password"
