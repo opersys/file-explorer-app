@@ -28,7 +28,6 @@ import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import com.opersys.fileexplorer.misc.PasswordGenerator;
 import com.opersys.fileexplorer.node.NodeProcessThread;
 import com.opersys.fileexplorer.node.NodeThreadEvent;
 import com.opersys.fileexplorer.node.NodeThreadEventData;
