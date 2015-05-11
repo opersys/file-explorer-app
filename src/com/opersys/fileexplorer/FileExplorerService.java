@@ -16,7 +16,10 @@
 
 package com.opersys.fileexplorer;
 
-import android.app.*;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -34,6 +37,7 @@ import com.opersys.fileexplorer.node.NodeThreadEventData;
 import com.opersys.fileexplorer.node.NodeThreadListener;
 import com.opersys.fileexplorer.platforminfo.PlatformInfoServer;
 
+import java.net.BindException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -161,7 +165,12 @@ public class FileExplorerService extends Service implements Thread.UncaughtExcep
 
     public void startServices() {
         startNodeProcess();
-        startPlatformInfoServer();
+
+        try {
+            startPlatformInfoServer();
+        } catch (BindException ex) {
+            Log.w(TAG, "Could not bind to port 3001. Hoping for the best.");
+        }
     }
 
     public void stopServices() {
@@ -203,7 +212,7 @@ public class FileExplorerService extends Service implements Thread.UncaughtExcep
         nodeThread = null;
     }
 
-    protected void startPlatformInfoServer() {
+    protected void startPlatformInfoServer() throws BindException {
         if (platformInfoServer != null) {
             Log.w(TAG, "Platform information restlet already started");
             return;

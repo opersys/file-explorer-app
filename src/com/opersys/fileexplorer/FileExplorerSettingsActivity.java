@@ -40,7 +40,7 @@ import java.net.URL;
 public class FileExplorerSettingsActivity extends PreferenceActivity
         implements NodeThreadListener {
 
-    public static final String TAG = "ProcessExplorer";
+    public static final String TAG = "FileExplorer";
 
     protected FileExplorerServiceBinder serviceBinder;
     protected FileExplorerServiceConnection servConn;

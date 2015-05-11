@@ -23,7 +23,7 @@ import com.opersys.fileexplorer.node.NodeThreadListener;
 
 public class FileExplorerServiceConnection implements ServiceConnection {
 
-    private static final String TAG = "ProcessExplorer-FileExplorerServiceConnection";
+    private static final String TAG = "FileExplorer-FileExplorerServiceConnection";
 
     private final NodeThreadListener serviceListener;
 
