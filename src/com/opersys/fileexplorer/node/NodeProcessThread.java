@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2014 Opersys inc.
+* Copyright (C) 2014-2015, Opersys inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class NodeProcessThread extends Thread {
     private FileExplorerService service;
     private Process nodeProcess;
 
-    private boolean isStopping;
+    private Timer tm;
 
     /**
      * This is the password as it has been sent to the interface. Null if
@@ -78,29 +78,29 @@ public class NodeProcessThread extends Thread {
     }
 
     public void stopProcess() {
-        Timer tm;
+        tm.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Log.w(TAG, "The node process didn't end in a timely manner, destroying it");
+                if (nodeProcess != null)
+                    nodeProcess.destroy();
+            }
+        }, 5000);
 
         try {
             writeCmd("quit");
 
-            nodeProcess.getOutputStream().close();
-            isStopping = true;
-            tm = new Timer("nodeKill", true);
-            tm.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    Log.w(TAG, "The node process didn't end in a timely manner, destroying it");
-                    if (nodeProcess != null)
-                        nodeProcess.destroy();
-                }
-            }, 5000);
+            if (nodeProcess != null)
+                nodeProcess.getOutputStream().close();
 
         } catch (IOException e) {
             // If we could not send the quit command to the process, forcefully
             // destroy it. This means we will not be able to read the streams but
             // that is preferrable to having the process stick around.
             Log.w(TAG, "Could not send quite command to process, destroying it.");
-            nodeProcess.destroy();
+
+            if (nodeProcess != null)
+                nodeProcess.destroy();
         }
     }
 
@@ -141,16 +141,14 @@ public class NodeProcessThread extends Thread {
                         .directory(new File(dir))
                         .command(exec, js);
 
-            if (!isStopping) {
-                nodeProcess = nodeProcessBuilder.start();
+            nodeProcess = nodeProcessBuilder.start();
 
-                msgHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        service.fireNodeServiceEvent(NodeThreadEvent.NODE_STARTED, emptyEventData);
-                    }
-                });
-            }
+            msgHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    service.fireNodeServiceEvent(NodeThreadEvent.NODE_STARTED, emptyEventData);
+                }
+            });
 
             try {
                 String pwd;
@@ -165,25 +163,32 @@ public class NodeProcessThread extends Thread {
                 Log.w(TAG, "Could not send 'pass' command. You won't be able to log into the interface.");
             }
 
-            // Loops through interruption if the interruption was not caused by the
-            // process being asked to stop.
-            while (!isStopping && exitValue == -1) {
-                try {
-                    nodeProcess.waitFor();
-                    exitValue = nodeProcess.exitValue();
-
-                } catch (InterruptedException e) {
-                    Log.i(TAG, "Interrupting wait on Node process");
-                } catch (IllegalThreadStateException e) {
-                    // This means the process was interrupted but that it
-                    // is still running since we can't get its exit value.
-                }
+            // Wait for the process to quit
+            try {
+                nodeProcess.waitFor();
+            } catch (InterruptedException e) {
+                Log.i(TAG, "Interrupting wait on Node process");
             }
+
+            // Successful (nor not) quit, cancel all the things
+            tm.cancel();
 
             sin = new StringBuffer();
             serr = new StringBuffer();
 
             try {
+                Log.d(TAG, "Reading process stdout...");
+
+                if (nodeProcess.getInputStream() != null) {
+                    bin = new BufferedReader(new InputStreamReader(nodeProcess.getInputStream()));
+
+                    while ((s = bin.readLine()) != null) {
+                        sin.append(s);
+                    }
+                }
+
+                Log.d(TAG, "Done reading process stdout");
+
                 Log.d(TAG, "Reading error stream");
 
                 if (nodeProcess.getErrorStream() != null) {
@@ -191,6 +196,7 @@ public class NodeProcessThread extends Thread {
                     while ((s = berr.readLine()) != null)
                         serr.append(s);
                 }
+
                 Log.d(TAG, "Done reading error stream");
 
             } catch (IOException ex) {
@@ -252,6 +258,9 @@ public class NodeProcessThread extends Thread {
         this.asRoot = asRoot;
 
         this.nodeProcessBuilder = new ProcessBuilder();
+
+        // A forcekill timer used in case nodeprocess becomes unresponsive
+        this.tm = new Timer("nodeKill", true);
     }
 
 }

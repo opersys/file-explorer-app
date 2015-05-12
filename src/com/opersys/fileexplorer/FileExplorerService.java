@@ -37,7 +37,6 @@ import com.opersys.fileexplorer.node.NodeThreadEventData;
 import com.opersys.fileexplorer.node.NodeThreadListener;
 import com.opersys.fileexplorer.platforminfo.PlatformInfoServer;
 
-import java.net.BindException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -165,17 +164,14 @@ public class FileExplorerService extends Service implements Thread.UncaughtExcep
 
     public void startServices() {
         startNodeProcess();
-
-        try {
-            startPlatformInfoServer();
-        } catch (BindException ex) {
-            Log.w(TAG, "Could not bind to port 3001. Hoping for the best.");
-        }
+        startPlatformInfoServer();
     }
 
     public void stopServices() {
         stopNodeProcess();
         stopPlatformInfoServer();
+
+        stopSelf();
     }
 
     protected void startNodeProcess() {
@@ -212,7 +208,7 @@ public class FileExplorerService extends Service implements Thread.UncaughtExcep
         nodeThread = null;
     }
 
-    protected void startPlatformInfoServer() throws BindException {
+    protected void startPlatformInfoServer() {
         if (platformInfoServer != null) {
             Log.w(TAG, "Platform information restlet already started");
             return;
