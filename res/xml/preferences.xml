@@ -30,12 +30,6 @@
         android:title="Stop the service" />
 
     <Preference
-        android:key="browseNow"
-        android:enabled="false"
-        android:summary="Not started"
-        android:title="Browse the File Explorer" />
-
-    <Preference
             android:key="quitNow"
             android:enabled="true"
             android:title="Quit the application" />
@@ -55,7 +49,7 @@
         <Preference
                 android:key="runAsRootInstruction"
                 android:title="Run File Explorer as root"
-                android:summary="Unless File Explorer runs as root, you won't be able to view all files and directories on the device. If you have one of the 'su' apps installed, enable the 'Run as root' option above before starting the service.\nIf you're using the AOSP emulator run the following on your computer and don't make use of the 'Start the service' button.\n$ adb shell 'cd /data/user/0/com.opersys.processexplorer/files &amp;&amp; ./node ./app.js'"
+                android:summary="Unless File Explorer runs as root, you won't be able to view all files and directories on the device. If you have one of the 'su' apps installed, enable the 'Run as root' option above before starting the service.\nIf you're using the AOSP emulator run the following on your computer and don't make use of the 'Start the service' button.\n$ adb shell 'cd /data/user/0/com.opersys.fileexplorer/files &amp;&amp; ./node ./app.js'"
                 android:enabled="true"
                 android:layout="@layout/preference" />
     </PreferenceCategory>

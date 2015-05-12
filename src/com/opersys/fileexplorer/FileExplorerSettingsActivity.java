@@ -66,30 +66,8 @@ public class FileExplorerSettingsActivity extends PreferenceActivity
             public boolean onPreferenceClick(Preference preference) {
                 serviceBinder.stopServiceThreads();
 
-                findPreference("browseNow").setSummary("Not started");
-                findPreference("browseNow").setEnabled(false);
-
-                return true;
-            }
-        });
-
-        findPreference("browseNow").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                Uri uri;
-                Uri.Builder uriBuilder;
-                int port;
-
-                uriBuilder = new Uri.Builder();
-                port = Integer.parseInt(sharedPrefs.getString("nodePort", "3000"));
-                uri = uriBuilder
-                        .scheme("http")
-                        .encodedAuthority("localhost:" + port)
-                        .path("index.html")
-                        .build();
-
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, uri);
-                startActivity(browserIntent);
+                findPreference("pe_instructions").setSummary("Service not started");
+                findPreference("pe_instructions").setEnabled(false);
 
                 return true;
             }
@@ -214,7 +192,6 @@ public class FileExplorerSettingsActivity extends PreferenceActivity
     protected void updateOnServiceStopped() {
         findPreference("stopNow").setEnabled(false);
         findPreference("startNow").setEnabled(true);
-        findPreference("browseNow").setEnabled(false);
     }
 
     /**
@@ -230,20 +207,28 @@ public class FileExplorerSettingsActivity extends PreferenceActivity
         new LocalIPAddressTask() {
             @Override
             public void onPostExecute(InetAddress inetAddress) {
+                int port = Integer.parseInt(sharedPrefs.getString("nodePort", "3000"));
+                String instruction = "";
+                URL url;
+
                 if (inetAddress == null) {
-                    findPreference("browseNow").setSummary("Could not find the local IP address");
+                    Log.e(TAG, "Unable to find a network interface where to point the user to.");
                     return;
                 }
 
-                int port = Integer.parseInt(sharedPrefs.getString("nodePort", "3000"));
-                URL url;
-
                 try {
                     url = new URL("http", inetAddress.getHostAddress(), port, "");
-                    findPreference("browseNow").setSummary("Browse to " + url.toString());
-                    findPreference("browseNow").setEnabled(true);
 
-                } catch (MalformedURLException e) {
+                    if (inetAddress.isLoopbackAddress()) {
+                        instruction = "Run in a shell \"adb forward tcp:" + port + " tcp:" + port + "\"\n";
+                    }
+
+                    instruction += "Browse to " + url.toString();
+
+                    findPreference("pe_instructions").setSummary(instruction);
+                    findPreference("pe_instructions").setEnabled(true);
+                }
+                catch (MalformedURLException e) {
                     Log.e(TAG, "Cannot form URL", e);
                 }
             }
