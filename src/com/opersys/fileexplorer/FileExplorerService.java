@@ -28,6 +28,7 @@ import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.Process;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -176,6 +177,7 @@ public class FileExplorerService extends Service implements Thread.UncaughtExcep
 
     protected void startNodeProcess() {
         SharedPreferences sharedPrefs;
+        List<String> args;
 
         if (nodeThread != null) {
             Log.w(TAG, "Node process already started");
@@ -186,15 +188,18 @@ public class FileExplorerService extends Service implements Thread.UncaughtExcep
 
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
+        args = new ArrayList<String>();
+        args.add("-p"); args.add(sharedPrefs.getString("nodePort", "3000"));
+        args.add("-e"); args.add("production");
+
         nodeThread = new NodeProcessThread(getFilesDir().toString(), "node", "app.js",
+                args.toArray(new String[args.size()]),
                 sharedPrefs.getBoolean("asRoot", false),
                 new NodeProcessHandler(),
                 this);
 
         addNodeThreadListener(this);
 
-        nodeThread.setEnvironment("PORT", sharedPrefs.getString("nodePort", "3000"));
-        nodeThread.setEnvironment("ENV", "production");
         nodeThread.setUncaughtExceptionHandler(this);
         nodeThread.startProcess();
     }

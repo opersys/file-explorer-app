@@ -16,6 +16,7 @@
 
 package com.opersys.fileexplorer.node;
 
+import android.net.LocalServerSocket;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
@@ -35,12 +36,15 @@ public class NodeProcessThread extends Thread {
 
     private static final String TAG = "NodeProcessThread";
 
+    private NodeKeepAliveSocketThread nodeKeepAliveThread;
+
     private ProcessBuilder nodeProcessBuilder;
 
     private String dir;
     private String exec;
     private String js;
     private String suExec;
+    private String args;
     private boolean asRoot;
 
     private Handler msgHandler;
@@ -108,23 +112,21 @@ public class NodeProcessThread extends Thread {
         start();
     }
 
-    public void setEnvironment(String varName, String varValue) {
-        nodeProcessBuilder
-                .environment()
-                .put(varName, varValue);
-    }
-
     @Override
     public void run() {
         final StringBuffer sin, serr;
         final NodeThreadEventData emptyEventData;
         BufferedReader bin, berr;
         String s;
-        int exitValue = -1;
 
         emptyEventData = new NodeThreadEventData();
 
+        if (!nodeKeepAliveThread.isAlive())
+            nodeKeepAliveThread.start();
+
         try {
+            LocalServerSocket stopSocket = new LocalServerSocket("file-explorer");
+
             msgHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -135,11 +137,13 @@ public class NodeProcessThread extends Thread {
             if (asRoot && suExec != null)
                 nodeProcessBuilder
                         .directory(new File(dir))
-                        .command(suExec, "-c", "cd " + dir + " && " + exec + " " + js);
+                        .command(suExec, "-c", "cd " + dir + " && " + exec + " " + js + " " + args);
             else
                 nodeProcessBuilder
                         .directory(new File(dir))
-                        .command(exec, js);
+                        .command(exec, args, js);
+
+            Log.i(TAG, "Starting process: " + TextUtils.join(" ", nodeProcessBuilder.command()));
 
             nodeProcess = nodeProcessBuilder.start();
 
@@ -241,6 +245,7 @@ public class NodeProcessThread extends Thread {
     public NodeProcessThread(String dir,
                              String execfile,
                              String jsfile,
+                             String[] args,
                              boolean asRoot,
                              Handler msgHandler,
                              FileExplorerService service) {
@@ -250,11 +255,14 @@ public class NodeProcessThread extends Thread {
             if (new File(sf).exists())
                 this.suExec = sf;
 
+        this.nodeKeepAliveThread = new NodeKeepAliveSocketThread();
+
         this.dir = dir;
         this.msgHandler = msgHandler;
         this.service = service;
         this.js = dir + "/" + jsfile;
         this.exec = dir + "/"+ execfile;
+        this.args = TextUtils.join(" ", args) + " -s " + this.nodeKeepAliveThread.getSocketName();
         this.asRoot = asRoot;
 
         this.nodeProcessBuilder = new ProcessBuilder();
