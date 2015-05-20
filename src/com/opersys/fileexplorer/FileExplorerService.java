@@ -28,14 +28,10 @@ import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.os.Process;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import com.opersys.fileexplorer.node.NodeProcessThread;
-import com.opersys.fileexplorer.node.NodeThreadEvent;
-import com.opersys.fileexplorer.node.NodeThreadEventData;
-import com.opersys.fileexplorer.node.NodeThreadListener;
+import com.opersys.fileexplorer.node.*;
 import com.opersys.fileexplorer.platforminfo.PlatformInfoServer;
 
 import java.util.ArrayList;
@@ -45,6 +41,8 @@ import java.util.List;
  * Author: François-Denis Gonthier (francois-denis.gonthier@opersys.com)
  */
 public class FileExplorerService extends Service implements Thread.UncaughtExceptionHandler, NodeThreadListener {
+
+    private NodeKeepAliveSocketThread nodeKeepAliveThread;
 
     class NodeProcessHandler extends Handler {
         @Override
@@ -191,6 +189,14 @@ public class FileExplorerService extends Service implements Thread.UncaughtExcep
         args = new ArrayList<String>();
         args.add("-p"); args.add(sharedPrefs.getString("nodePort", "3000"));
         args.add("-e"); args.add("production");
+
+        // This has to be started only once.
+        if (nodeKeepAliveThread == null) {
+            nodeKeepAliveThread = new NodeKeepAliveSocketThread();
+            nodeKeepAliveThread.start();
+        }
+
+        args.add("-s"); args.add(nodeKeepAliveThread.getSocketName());
 
         nodeThread = new NodeProcessThread(getFilesDir().toString(), "node", "app.js",
                 args.toArray(new String[args.size()]),

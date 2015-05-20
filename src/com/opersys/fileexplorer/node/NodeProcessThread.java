@@ -36,8 +36,6 @@ public class NodeProcessThread extends Thread {
 
     private static final String TAG = "NodeProcessThread";
 
-    private NodeKeepAliveSocketThread nodeKeepAliveThread;
-
     private ProcessBuilder nodeProcessBuilder;
 
     private String dir;
@@ -121,12 +119,7 @@ public class NodeProcessThread extends Thread {
 
         emptyEventData = new NodeThreadEventData();
 
-        if (!nodeKeepAliveThread.isAlive())
-            nodeKeepAliveThread.start();
-
         try {
-            LocalServerSocket stopSocket = new LocalServerSocket("file-explorer");
-
             msgHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -255,14 +248,12 @@ public class NodeProcessThread extends Thread {
             if (new File(sf).exists())
                 this.suExec = sf;
 
-        this.nodeKeepAliveThread = new NodeKeepAliveSocketThread();
-
         this.dir = dir;
         this.msgHandler = msgHandler;
         this.service = service;
         this.js = dir + "/" + jsfile;
         this.exec = dir + "/"+ execfile;
-        this.args = TextUtils.join(" ", args) + " -s " + this.nodeKeepAliveThread.getSocketName();
+        this.args = TextUtils.join(" ", args);
         this.asRoot = asRoot;
 
         this.nodeProcessBuilder = new ProcessBuilder();

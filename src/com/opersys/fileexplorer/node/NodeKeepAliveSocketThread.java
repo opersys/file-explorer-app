@@ -16,6 +16,7 @@ public class NodeKeepAliveSocketThread extends Thread {
 
     public NodeKeepAliveSocketThread() {
         socketName = UUID.randomUUID().toString();
+        setDaemon(true);
     }
 
     public String getSocketName() {
