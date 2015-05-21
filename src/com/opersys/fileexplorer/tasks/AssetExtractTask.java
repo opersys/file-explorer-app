@@ -120,25 +120,17 @@ public abstract class AssetExtractTask extends AsyncTask<AssetExtractTaskParams,
         ZipFile zf;
         InputStream is;
         OutputStream os;
-        String archPie, arch, archId;
+        String archId;
         String assetPath = params[0].assetPath;
         File extractPath = params[0].extractPath;
         AssetManager assetManager = params[0].assetManager;
-        ZipEntry zentry = null;
-
-        // PIE support.
-        if (Build.VERSION.SDK_INT > 16)
-            archPie = "_pie";
-        else
-            archPie = "";
+        ZipEntry zentry;
 
         // Architecture. FIXME: Defaults to ARM. Should error out instead.
         if (Build.CPU_ABI.contains("x86"))
-            arch = "ia32";
+            archId = "ia32";
         else
-            arch = "arm";
-
-        archId = arch + archPie;
+            archId = "arm";
 
         zipFile = new File(extractPath + File.separator + assetPath);
 

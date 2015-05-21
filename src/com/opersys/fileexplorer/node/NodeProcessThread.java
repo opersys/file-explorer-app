@@ -24,8 +24,7 @@ import com.opersys.fileexplorer.FileExplorerService;
 import com.opersys.fileexplorer.misc.PasswordGenerator;
 
 import java.io.*;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 /**
  * Author: François-Denis Gonthier (francois-denis.gonthier@opersys.com)
@@ -42,7 +41,7 @@ public class NodeProcessThread extends Thread {
     private String exec;
     private String js;
     private String suExec;
-    private String args;
+    private String[] args;
     private boolean asRoot;
 
     private Handler msgHandler;
@@ -130,11 +129,18 @@ public class NodeProcessThread extends Thread {
             if (asRoot && suExec != null)
                 nodeProcessBuilder
                         .directory(new File(dir))
-                        .command(suExec, "-c", "cd " + dir + " && " + exec + " " + js + " " + args);
-            else
+                        .command(suExec, "-c", "cd " + dir + " && " + exec + " " + js + " " + TextUtils.join(" ", args));
+            else {
+                List<String> argList = new ArrayList<String>();
+
+                argList.add(exec);
+                argList.add(js);
+                argList.addAll(Arrays.asList(args));
+
                 nodeProcessBuilder
                         .directory(new File(dir))
-                        .command(exec, args, js);
+                        .command(argList);
+            }
 
             Log.i(TAG, "Starting process: " + TextUtils.join(" ", nodeProcessBuilder.command()));
 
@@ -230,7 +236,9 @@ public class NodeProcessThread extends Thread {
 
         } finally {
             // Make sure everything about the process is destroyed.
-            nodeProcess.destroy();
+            if (nodeProcess != null)
+                nodeProcess.destroy();
+
             nodeProcess = null;
         }
     }
@@ -253,7 +261,7 @@ public class NodeProcessThread extends Thread {
         this.service = service;
         this.js = dir + "/" + jsfile;
         this.exec = dir + "/"+ execfile;
-        this.args = TextUtils.join(" ", args);
+        this.args = args;
         this.asRoot = asRoot;
 
         this.nodeProcessBuilder = new ProcessBuilder();
